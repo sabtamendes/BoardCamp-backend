@@ -62,8 +62,8 @@ export async function customerIdValidation(req, res, next) {
 
         next();
 
-    } catch (error) {
-        console.error(error, "AQUI");
+    } catch (err) {
+        console.error(err);
         res.sendStatus(500);
     }
 }
