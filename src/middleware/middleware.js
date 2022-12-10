@@ -1,27 +1,6 @@
 import connection from "../database/database.js";
 import { customersSchema } from "../schemas/customers.schema.js";
 
-// export async function categoriesValidation(req, res, next) {
-//     const { name } = req.body;
-
-//     try {
-//         if (name === "") {
-//             return res.sendStatus(400);
-//         }
-//         const theNameAllreadyExists = await connection.query("SELECT * FROM categories WHERE name = $1", [name]);
-
-//         if (theNameAllreadyExists) {
-//             return res.sendStatus(409);
-//         }
-
-//         res.locals.postCategories = theNameAllreadyExists;
-//next();
-//     } catch (err) {
-//         res.send(err)
-//     }
-//  
-//}
-
 export async function customersValidation(req, res, next) {
     const customer = req.body;
 

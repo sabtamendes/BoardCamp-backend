@@ -1,9 +1,11 @@
 import express from "express";
 import cors from "cors";
+import dotenv from "dotenv";
 import categories from "./routes/categories.routes.js";
 import games from "./routes/games.routes.js";
 import customers from "./routes/customers.routes.js";
-import rentals from "./routes/rentals.routes.js"
+import rentals from "./routes/rentals.routes.js";
+dotenv.config();
 const server = express();
 server.use(cors());
 server.use(express.json());
