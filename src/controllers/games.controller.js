@@ -2,7 +2,7 @@ import connection from "../database/database.js";
 
 export async function getGames(req, res) {
     const { name } = req.query;
-
+    
     try {
     
         if (name) {
@@ -12,12 +12,19 @@ export async function getGames(req, res) {
         }
 
         const allGames = 
-        await connection.query("SELECT * FROM games;");
+        await connection.query(`SELECT games.*, categories.name AS "categoryName"
+                FROM
+                games
+                JOIN
+                categories
+                ON
+                games."categoryId" = categories.id`);
 
         res.send(allGames.rows);
 
-    } catch (error) {
-        res.send(error);
+    } catch (err) {
+        console.error(err);
+        res.sendStatus(500);
     }
 }
 
