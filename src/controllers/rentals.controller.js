@@ -21,7 +21,7 @@ export async function getRentals(req, res) {
 
         const allRentals = await connection.query(`
         SELECT rentals.*, customers.id, customers.name, games.id, games.name, games."categoryId", categories.name AS "categoryName"
-            FROM rentals
+            FROM rentals 
             JOIN customers ON rentals."customerId" = customers.id
             JOIN games ON  rentals."gameId" = games.id
             JOIN categories ON categories.id = games."categoryId"
@@ -31,7 +31,7 @@ export async function getRentals(req, res) {
         res.send(allRentals.rows);
 
     } catch (err) {
-        console.error(err, "aqiii");
+        console.error(err);
         res.sendStatus(500);
     }
 }
@@ -51,6 +51,25 @@ export async function postRentals(req, res) {
 
     } catch (err) {
         console.log(err);
+        res.sendStatus(500);
+    }
+}
+export async function deleteRentals(req, res) {
+    const { id } = req.params;
+    console.log("params", id)
+    try {
+        const idExists = await connection.query("SELECT * FROM rentals WHERE id  = $1 ", [id]);
+        console.log(idExists.rows)
+        if (idExists.rows[0].id.length === 0) {
+            return res.sendStatus(404);
+        }
+
+        if (idExists.rows[0].returnDate === null) {
+            return res.sendStatus(400);
+        }
+
+    } catch (err) {
+        console.error(err);
         res.sendStatus(500);
     }
 }
