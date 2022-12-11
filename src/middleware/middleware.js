@@ -12,7 +12,7 @@ export async function customersValidation(req, res, next) {
     }
 
     try {
-        const cpfAllreadyExists = await connection.query("SELECT * FROM customers WHERE cpf= $1;", [customer.cpf]);
+        const cpfAllreadyExists = await connection.query("SELECT * FROM customers WHERE cpf = $1;", [customer.cpf]);
 
         if (cpfAllreadyExists.rows.length !== 0 && cpfAllreadyExists.rows.id !== 0) {
             return res.sendStatus(409);

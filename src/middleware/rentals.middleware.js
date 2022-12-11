@@ -4,13 +4,13 @@ export async function rentalsValidation(req, res, next) {
     const { customerId, gameId, daysRented } = req.body;
 
     try {
-        const customerIdExists = await connection.query("SELECT id FROM customers WHERE id = $1;", [customerId]);
+        const customerIdExists = await connection.query("SELECT * FROM customers WHERE id = $1;", [customerId]);
 
         if (!customerIdExists.rows[0]) {
             return res.sendStatus(400);
         }
 
-        const gameExists = await connection.query("SELECT id FROM games WHERE id = $1;", [gameId]);
+        const gameExists = await connection.query('SELECT * FROM games WHERE  id = $1;', [gameId]);
 
         if (!gameExists.rows[0]) {
             return res.sendStatus(400);
@@ -20,13 +20,16 @@ export async function rentalsValidation(req, res, next) {
             return res.sendStatus(400);
         }
 
-        const rentalsOpen = await connection.query(`SELECT * FROM rentals WHERE "returnDate" IS NULL AND "delayFee" IS NULL AND "customerId" = $1;`, [gameId]);
+        const rentalsOpen = await connection.query('SELECT * FROM rentals WHERE "returnDate" IS NULL AND "customerId" = $1;', [gameId]);
 
-        if (rentalsOpen.rows.length > gameExists.rows[0].stockTotal) {
+        if (rentalsOpen.rows.length >= gameExists.rows[0].stockTotal) {
+            console.log("ESTOQUE ZERADO");
             return res.sendStatus(400);
         }
 
         res.locals.rentals = req.body;
+        res.locals.stock = gameExists.rows[0].stockTotal;
+        res.locals.game = gameId;
 
         next();
 
@@ -36,12 +39,12 @@ export async function rentalsValidation(req, res, next) {
     }
 }
 export async function rentalsIdValidation(req, res, next) {
-    const  id  = req.params.id;
+    const { id } = req.params;
 
     try {
-        const idExists = await connection.query("SELECT * FROM rentals WHERE id = $1 ", [id]);
+        const idExists = await connection.query("SELECT * FROM rentals WHERE id = $1", [id]);
 
-        if (!idExists.rows[0]) {
+        if (!idExists.rows[0].id) {
             return res.sendStatus(404);
         }
 

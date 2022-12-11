@@ -19,7 +19,7 @@ export async function postCategories(req, res) {
         }
         const theNameAllreadyExists = await connection.query("SELECT * FROM categories WHERE name = $1", [name]);
 
-        if (theNameAllreadyExists.rows.length !== 0) {
+        if (theNameAllreadyExists.rows.length !== 0 || theNameAllreadyExists.rows[0].name === name) {
             return res.sendStatus(409);
         }
 
@@ -27,7 +27,7 @@ export async function postCategories(req, res) {
 
         res.sendStatus(201);
 
-    } catch (error) {
+    } catch (err) {
         res.send(err);
     }
 }
