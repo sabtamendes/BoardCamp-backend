@@ -4,16 +4,18 @@ export async function getCustomers(req, res) {
     const { cpf } = req.query;
 
     try {
+        const listing = await connection.query("SELECT * FROM customers WHERE cpf ILIKE $1;", [`${cpf}%`]);
+
         if (cpf) {
-            const listing = await connection.query("SELECT * FROM customers WHERE cpf ILIKE = $1;", [`${cpf}%`]);
             return res.send(listing.rows);
         }
 
-        const allCustomers = await connection.query("SELECT * FROM customers;");
+        const allCustomers = await connection.query('SELECT *, birthday::text FROM customers;');
+
         res.send(allCustomers.rows);
 
-    } catch (error) {
-        console.error(error);
+    } catch (err) {
+        console.error(err);
         res.sendStatus(500);
     }
 }
@@ -21,7 +23,7 @@ export async function getCustomersById(req, res) {
     const { id } = req.params;
 
     try {
-        const customersId = await connection.query("SELECT * FROM customers WHERE id = $1;", [id]);
+        const customersId = await connection.query('SELECT *, birthday::text FROM customers WHERE id = $1;', [id]);
 
         if (customersId.rows.length === 0) {
             return res.sendStatus(404);
@@ -46,7 +48,7 @@ export async function postCustomers(req, res) {
         res.sendStatus(500);
     }
 }
-export async function patchCustomers(req, res) {
+export async function putCustomers(req, res) {
     const { name, phone, cpf, birthday } = res.locals.customers;
     const id = res.locals.id;
     try {

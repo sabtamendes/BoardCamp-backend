@@ -8,38 +8,38 @@ export async function getRentals(req, res) {
     const { startDate } = req.query;
 
     try {
+        const filteringCustomerId = await connection.query('SELECT *,"rentDate"::text FROM rentals WHERE "customerId" = $1;', [customerId]);
 
-        if (customerId) {
-            const filteringCustomerId = await connection.query("SELECT * FROM rentals WHERE 'customerId' = $1;", [customerId]);
-
+        if (customerId !== undefined) {
             return res.send(filteringCustomerId.rows);
         }
 
-        if (gameId) {
-            const filteringGameId = await connection.query("SELECT * FROM rentals WHERE 'gameId' = $1;", [gameId]);
+        const filteringGameId = await connection.query('SELECT *,"rentDate"::text FROM rentals WHERE "gameId" = $1;', [gameId]);
 
+        if (gameId !== undefined) {
             return res.send(filteringGameId.rows);
         }
-        if (status === 'open') {
-            const filteringStatusOpened = await connection.query("SELECT * FROM rentals WHERE 'returnDate' = null;");
 
+        const filteringStatusOpened = await connection.query('SELECT *,"rentDate"::text FROM rentals WHERE "returnDate" ISNULL;');
+
+        if (status === 'open') {
             return res.send(filteringStatusOpened.rows);
         }
 
-        if (status === 'closed') {
-            const filteringStatusClosed = await connection.query("SELECT * FROM rentals WHERE 'returnDate' <> null;");
+        const filteringStatusClosed = await connection.query('SELECT *, "rentDate"::text, "returnDate"::text FROM rentals WHERE "returnDate" NOTNULL;');
 
+        if (status === 'closed') {
             return res.send(filteringStatusClosed.rows);
         }
 
-        if (startDate) {
-            const filteringStartDate = await connection.query("SELECT * FROM rentals WHERE 'rentDate' = $1;", [startDate]);
+        const filteringStartDate = await connection.query('SELECT *, "rentDate"::text FROM rentals WHERE "rentDate" = $1;', [startDate]);
 
+        if (startDate !== undefined) {
             return res.send(filteringStartDate.rows);
         }
 
         const allRentals = await connection.query(`
-        SELECT rentals.*,
+        SELECT rentals.*, rentals."rentDate"::text,
             row_to_json(customers.*)AS customer, 
             json_build_object(
                 'id',games.id,
@@ -49,7 +49,7 @@ export async function getRentals(req, res) {
                 )AS game 
             FROM rentals  
             JOIN customers  
-            ON customers.id ="customerId"  
+            ON customers.id = "customerId"  
             JOIN games 
             ON games.id = "gameId" 
             JOIN categories 
@@ -65,13 +65,20 @@ export async function getRentals(req, res) {
 }
 export async function postRentals(req, res) {
     const { customerId, gameId, daysRented } = res.locals.rentals;
+    const stock = res.locals.stock;
+    const game = res.locals.game;
 
     try {
+
+        const rentDate = dayjs("2022-12-05");
+
         const gameRented = await connection.query("SELECT * FROM games WHERE id = $1;", [gameId]);
 
-        const rentDate = dayjs().format('YYYY-MM-DD');
-
         const originaPrice = daysRented * gameRented.rows[0].pricePerDay;
+
+        const stockTotal = stock - game;
+
+        await connection.query('UPDATE games SET "stockTotal" = $1 WHERE id = $2;', [stockTotal, gameId]);
 
         await connection.query('INSERT INTO rentals ("customerId","gameId","rentDate","daysRented","originalPrice") VALUES ($1,$2,$3,$4,$5);', [customerId, gameId, rentDate, daysRented, originaPrice]);
 
@@ -84,19 +91,29 @@ export async function postRentals(req, res) {
 }
 export async function postReturnRentals(req, res) {
     const { id } = res.locals;
+
     try {
         const rentals = await connection.query("SELECT * FROM rentals WHERE id = $1;", [id]);
-        const price = await connection.query("SELECT 'pricePerDay' FROM games WHERE id = $1;", [id]);
 
-        const returnDate = dayjs().format('YYYY-MM-DD'); //OK
+        const returnDate = dayjs();
 
-        const rentDate = new Date(rentals.rows[0].rentDate).format('YYYY-MM-DD'); //ok
-        const pricePerDay = price.rows[0].pricePerDay;
+        const rentDate = dayjs(rentals.rows[0].rentDate);
+
         const daysRented = rentals.rows[0].daysRented;
-        const differenceDays = returnDate.diff(rentDate, 'hour') / 24;//dias de atraso OK;
-        const delayFee = differenceDays > daysRented ? (differenceDays - daysRented) * pricePerDay : 0;
+        //DIAS NO ATRASO DO ALUGUEL;
+        const lateRentDays = Math.abs(rentDate.diff(returnDate, 'day')) - daysRented;
 
-        await connection.query('UPDATE rentals SET "returnDate" = $1 "delayFee" = $2 WHERE id = $3;', [returnDate, delayFee, id]);
+        const pricePerDay = rentals.rows[0].originalPrice / daysRented;
+
+        //const delayFee = lateRentDays > daysRented ? lateRentDays  * pricePerDay : 0;
+        let delayFee = 0;
+
+        if (lateRentDays > daysRented) {
+            delayFee += lateRentDays * pricePerDay
+        }
+
+        console.log(delayFee, "delayFee")
+        await connection.query(`UPDATE rentals SET "returnDate"= $1, "delayFee"= $2 WHERE id = $3;`, [returnDate, delayFee, id]);
 
         res.sendStatus(200);
 

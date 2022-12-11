@@ -2,17 +2,15 @@ import connection from "../database/database.js";
 
 export async function getGames(req, res) {
     const { name } = req.query;
-    
+
     try {
-    
+        const filteringNameParams = await connection.query("SELECT * FROM games WHERE name ILIKE  $1;", [`${name}%`]);
+
         if (name) {
-            const filteringNameParams = 
-            await connection.query("SELECT * FROM games WHERE name ILIKE = $1;", [`${name}%`]);
             return res.send(filteringNameParams.rows);
         }
 
-        const allGames = 
-        await connection.query(`SELECT games.*, categories.name AS "categoryName"
+        const allGames = await connection.query(`SELECT games.*, categories.name AS "categoryName"
                 FROM
                 games
                 JOIN
@@ -38,20 +36,21 @@ export async function postGames(req, res) {
         } = req.body;
 
     try {
+        
         if (!name || name.length === 0 || stockTotal === 0 || pricePerDay === 0) {
             return res.sendStatus(400);
         }
 
-        const theGameNameAllreadyExists = 
-        await connection.query("SELECT * FROM games WHERE name = $1;", [name]);
+        const theGameNameAllreadyExists =
+            await connection.query("SELECT * FROM games WHERE name = $1;", [name]);
 
 
         if (theGameNameAllreadyExists.rows.length !== 0) {
             return res.sendStatus(409);
         }
 
-        const idExists = 
-        await connection.query("SELECT id FROM categories WHERE id = $1;", [categoryId]);
+        const idExists =
+            await connection.query("SELECT id FROM categories WHERE id = $1;", [categoryId]);
 
         if (!idExists) {
             return res.sendStatus(400);
@@ -62,8 +61,8 @@ export async function postGames(req, res) {
 
         res.sendStatus(201);
 
-    } catch (error) {
-        console.log(error)
+    } catch (err) {
+        console.log(err)
         res.sendStatus(500);
     }
 }
