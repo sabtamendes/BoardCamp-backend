@@ -66,17 +66,16 @@ export async function getRentals(req, res) {
 export async function postRentals(req, res) {
     const { customerId, gameId, daysRented } = res.locals.rentals;
     const stock = res.locals.stock;
-    const game = res.locals.game;
 
     try {
 
-        const rentDate = dayjs("2022-12-05");
+        const rentDate = dayjs();
 
         const gameRented = await connection.query("SELECT * FROM games WHERE id = $1;", [gameId]);
 
         const originaPrice = daysRented * gameRented.rows[0].pricePerDay;
 
-        const stockTotal = stock - game;
+        const stockTotal = stock ? stock - 1 : '';
 
         await connection.query('UPDATE games SET "stockTotal" = $1 WHERE id = $2;', [stockTotal, gameId]);
 
@@ -90,7 +89,7 @@ export async function postRentals(req, res) {
     }
 }
 export async function postReturnRentals(req, res) {
-    const { id } = res.locals;
+    const id = res.locals.id;
 
     try {
         const rentals = await connection.query("SELECT * FROM rentals WHERE id = $1;", [id]);
@@ -100,19 +99,17 @@ export async function postReturnRentals(req, res) {
         const rentDate = dayjs(rentals.rows[0].rentDate);
 
         const daysRented = rentals.rows[0].daysRented;
-        //DIAS NO ATRASO DO ALUGUEL;
-        const lateRentDays = Math.abs(rentDate.diff(returnDate, 'day')) - daysRented;
-
+     
+        const lateRentDays = Math.abs(rentDate.diff(returnDate, 'day') - daysRented);
+     
         const pricePerDay = rentals.rows[0].originalPrice / daysRented;
 
-        //const delayFee = lateRentDays > daysRented ? lateRentDays  * pricePerDay : 0;
         let delayFee = 0;
 
         if (lateRentDays > daysRented) {
-            delayFee += lateRentDays * pricePerDay
+            delayFee = lateRentDays  * pricePerDay;
         }
 
-        console.log(delayFee, "delayFee")
         await connection.query(`UPDATE rentals SET "returnDate"= $1, "delayFee"= $2 WHERE id = $3;`, [returnDate, delayFee, id]);
 
         res.sendStatus(200);
