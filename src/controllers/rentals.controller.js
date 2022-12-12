@@ -99,15 +99,15 @@ export async function postReturnRentals(req, res) {
         const rentDate = dayjs(rentals.rows[0].rentDate);
 
         const daysRented = rentals.rows[0].daysRented;
-     
-        const lateRentDays = Math.abs(rentDate.diff(returnDate, 'day') - daysRented);
-     
+   
+        const lateRentDays = Math.abs(rentDate.diff(returnDate, 'day'));
+       
         const pricePerDay = rentals.rows[0].originalPrice / daysRented;
 
-        let delayFee = 0;
+        let delayFee = null;
 
         if (lateRentDays > daysRented) {
-            delayFee = lateRentDays  * pricePerDay;
+            delayFee = (lateRentDays - daysRented) * pricePerDay;
         }
 
         await connection.query(`UPDATE rentals SET "returnDate"= $1, "delayFee"= $2 WHERE id = $3;`, [returnDate, delayFee, id]);

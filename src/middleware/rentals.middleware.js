@@ -47,7 +47,7 @@ export async function rentalsIdValidation(req, res, next) {
             return res.sendStatus(404);
         }
 
-        if (idExists.rows[0].returnDate) {
+        if (idExists.rows[0].returnDate !== null) {
             return res.sendStatus(400);
         }
 
@@ -55,6 +55,27 @@ export async function rentalsIdValidation(req, res, next) {
 
         next();
 
+    } catch (err) {
+        console.error(err);
+        res.sendStatus(500);
+    }
+}
+export async function idValidation(req, res, next) {
+    const { id } = req.params;
+
+    try {
+        const idExists = await connection.query("SELECT * FROM rentals WHERE id = $1", [id]);
+
+        if (!idExists.rows[0].id) {
+            return res.sendStatus(404);
+        }
+
+        if (idExists.rows[0].returnDate === null) {
+            return res.sendStatus(400);
+        }
+        res.locals.id = id;
+
+        next();
     } catch (err) {
         console.error(err);
         res.sendStatus(500);
