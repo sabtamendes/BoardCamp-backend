@@ -37,7 +37,7 @@ export async function postGames(req, res) {
 
     try {
         
-        if (!name || name.length === 0 || stockTotal === 0 || pricePerDay === 0) {
+        if (!name || name.length <= 0 || image === null||  stockTotal <= 0 || pricePerDay <= 0) {
             return res.sendStatus(400);
         }
 

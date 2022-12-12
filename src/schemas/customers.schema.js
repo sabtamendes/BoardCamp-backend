@@ -1,5 +1,5 @@
 import joi from "joi";
-import dayjs from "dayjs";
+
 export const customersSchema = joi.object({
     name: joi.string().required(),
     phone: joi.string().max(11).required(),
