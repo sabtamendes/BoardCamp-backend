@@ -29,7 +29,6 @@ export async function rentalsValidation(req, res, next) {
 
         res.locals.rentals = req.body;
         res.locals.stock = gameExists.rows[0].stockTotal;
-        res.locals.game = gameId;
 
         next();
 
