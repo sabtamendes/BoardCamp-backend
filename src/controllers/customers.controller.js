@@ -21,16 +21,16 @@ export async function getCustomers(req, res) {
 }
 export async function getCustomersById(req, res) {
     const { id } = req.params;
-
+    console.log(req.params)
     try {
         const customersId = await connection.query('SELECT *, birthday::text FROM customers WHERE id = $1;', [id]);
 
         if (customersId.rows.length === 0) {
             return res.sendStatus(404);
         }
-
+console.log("passou daqiui")
         res.send(customersId.rows);
-
+console.log(customersId.rows, "aqui")
     } catch (err) {
         console.error(err);
         res.sendStatus(500);
